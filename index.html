@@ -1,0 +1,28 @@
+<!doctype html>
+<head></head>
+<body>  
+    User
+    <input id="user"><button onclick="getUser()">Go!</button>
+    <div id="user-info"></div>
+</body>
+<script>
+    async function getUser() {
+        const user = document.getElementById("user").value;
+        const url = "https://corsproxy.io/https://api.scratch.mit.edu/users/" + user
+        const response = await fetch(url)
+        var userInfoHTML = document.getElementById("user-info")
+        var parsedData
+
+        try {
+            if(response.ok) {
+                const data = await response.json();
+                userInfoHTML.innerHTML = JSON.stringify(data);
+            } else {
+                throw new Error("Something went wrong");
+            }
+        } catch (error) {
+            userInfoHTML.innerHTML = "ERROR"
+        }
+    }
+</script>
+</html>
