@@ -2,17 +2,26 @@
 <head></head>
 <body>  
     User
-    <input id="user"><button onclick="getUser()">Go!</button>
+    <input id="user"><button onclick="getUser(document.getElementById('user').value)">Go!</button>
     <div id="user-info"></div>
 </body>
 <script>
-    async function getUser() {
-        const user = document.getElementById("user").value;
-        const url = "https://corsproxy.io/https://api.scratch.mit.edu/users/" + user
-        const response = await fetch(url)
-        var userInfoHTML = document.getElementById("user-info")
-        var parsedData
+    const user = new URLSearchParams(window.location.search).get('user')
+    if (user) {
+        getUser(user)
+    }
 
+    async function getUser(fetchUser) {
+        const url = "https://corsproxy.io/https://api.scratch.mit.edu/users/" + fetchUser
+        const response = await fetch(url)
+        
+        var userInfoHTML = document.getElementById("user-info")
+        var href = new URL(window.location.href);
+        href.searchParams.set('user', fetchUser);
+        history.replaceState(null, null, href.toString())
+        
+        var parsedData
+        
         try {
             if(response.ok) {
                 const data = await response.json();
