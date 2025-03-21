@@ -59,12 +59,16 @@
                     `
                 <div id="aboutme">
                     <img src="./images/AboutMe.png"/>
-                    <pre>${data.profile.bio}</pre>
+                    <div style="height: 150px; overflow: scroll;">
+                        <pre>${data.profile.bio}</pre>
+                    </div>
                 </div>
             <br/>
                 <div id="wiwo">
                     <img src="./images/WIWO.png"/>
-                    <pre>${data.profile.status}</pre>
+                    <div style="height: 150px; overflow: scroll;">
+                        <pre>${data.profile.status}</pre>
+                    </div>
                 </div>
                 <div id="most-viewed">
                     <img src="./images/MVP.png"/>
@@ -103,6 +107,9 @@
                         totalFavorites += project.stats.favorites;
                     });
 
+                    const averageViews = projects.length > 0 ? Math.round(totalViews / projects.length) : 0;
+                    const averageLoves = projects.length > 0 ? Math.round(totalLoves / projects.length) : 0;
+                    const averageFavorites = projects.length > 0 ? Math.round(totalFavorites / projects.length) : 0;
                     userside.innerHTML =
                         `
             <div id="user" class="sidecontainer">
@@ -119,15 +126,32 @@
                 <ul>
                     <li>
                         <img src="./images/Heart.png"/>
-                        ${totalLoves}
+                        ${totalLoves.toLocaleString()}
                     </li>
                     <li>
                         <img src="./images/Star.png"/>
-                        ${totalFavorites}
+                        ${totalFavorites.toLocaleString()}
                     </li>
                     <li>
                         <img src="./images/View.png"/>
-                        ${totalViews}
+                        ${totalViews.toLocaleString()}
+                    </li>
+                </ul>
+            </div>
+            <div id="stats" class="sidecontainer">
+                <center>Average Project Stats:</center>
+                <ul>
+                    <li>
+                        <img src="./images/Heart.png"/>
+                        ${averageLoves.toLocaleString()}
+                    </li>
+                    <li>
+                        <img src="./images/Star.png"/>
+                        ${averageFavorites.toLocaleString()}
+                    </li>
+                    <li>
+                        <img src="./images/View.png"/>
+                        ${averageViews.toLocaleString()}
                     </li>
                 </ul>
             </div>
@@ -153,8 +177,21 @@
                                 projectDiv.innerHTML = 
                                 `
                                 <img style="width: 75px;" src="https://uploads.scratch.mit.edu/projects/thumbnails/${project.id}.png" />
-                                <a href="https://scratch.mit.edu/projects/${project.id}"><p>${project.title}</p></a>
-                                <small>${project.stats[statistic]}</small>
+                                <a href="https://scratch.mit.edu/projects/${project.id}">
+                                    <p>${project.title}</p>
+                                </a>
+                                <div>
+                                    <img src="./images/${
+                                        statistic === "views" ? "View" :
+                                        statistic === "loves" ? "Heart" :
+                                        statistic === "favorites" ? "Star" :
+                                        ''
+                                    }.png" style="
+                                        width: 7px;
+                                        vertical-align: middle;
+                                    ">
+                                    <small>${project.stats[statistic]}</small>
+                                </div>
                                 `;
                                 projectsDIV.appendChild(projectDiv);
                             });
