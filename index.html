@@ -1,21 +1,18 @@
 <!doctype html>
-
 <head>
     <title>Scratchstats</title>
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
     <div id="container">
         <div id="header" class="clearme">
             <div id="logo">
-                <img src="./images/Logo.png" />
+                <img src="./images/Logo.png"/>
             </div>
             <div class="search-container">
                 <div id="search-field">
-                    <input id="searchbar" placeholder="Search for any user!" autocomplete="off" />
-                    <img id="user" src="./images/search.png"
-                        onclick="getUser(document.getElementById('searchbar').value)" />
+                    <input id="searchbar" placeholder="Search for any user!" autocomplete="off"/>
+                    <img id="user" src="./images/search.png" onclick="getUser(document.getElementById('searchbar').value)"/>
                 </div>
             </div>
         </div>
@@ -29,21 +26,31 @@
     const user = new URLSearchParams(window.location.search).get('user')
     if (user) { console.log("Fetching user!");getUser(user)}
 
+    function hyperLinkText(text, href) {
+        const link = document.createElement('a');
+        link.href = href;
+        link.textContent = text;
+        return link;
+    }
+
+    function findandReplaceMentions(text) {
+        const mentionRegex = /@([a-zA-Z0-9_-]+)/g;
+        return text.replace(mentionRegex, (match, username) => {
+            const link = hyperLinkText(`@${username}`, `https://scratch.mit.edu/users/${username}`);
+            return link.outerHTML;
+        })
+    }
+
     async function fetchUrl(url) {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log("Fetched Data:", data);
-        return data;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return await res.json();
     }
 
     async function getUser(fetchUser) {
-        const url = "https://corsproxy.io/https://api.scratch.mit.edu/users/" + fetchUser
+        const url = "https://corsproxy.io/?url=https://api.scratch.mit.edu/users/" + fetchUser
         try {
             const data = await fetchUrl(url);
-
             var userside = document.getElementById("userside")
             var userInfoHTML = document.getElementById("userinfo")
             var href = new URL(window.location.href);
@@ -55,42 +62,22 @@
             let offset = 0;
 
             if (data) {
-                userInfoHTML.innerHTML =
-                    `
-                <div id="aboutme">
-                    <img src="./images/AboutMe.png"/>
-                    <div style="height: 150px; overflow: scroll;">
-                        <pre>${data.profile.bio}</pre>
-                    </div>
-                </div>
-            <br/>
-                <div id="wiwo">
-                    <img src="./images/WIWO.png"/>
-                    <div style="height: 150px; overflow: scroll;">
-                        <pre>${data.profile.status}</pre>
-                    </div>
-                </div>
-                <div id="most-viewed">
-                    <img src="./images/MVP.png"/>
-                </div>
-                <div id="most-favorited">
-                    <img src="./images/MFP.png"/>
-                </div>
-                <div id="most-loved">
-                    <img src="./images/MLP.png"/>
-                </div>
-                `
+                userInfoHTML.innerHTML = `
+                <div id="aboutme"><img src="./images/AboutMe.png"/><div style="max-height: 150px; overflow-y: scroll;"><pre>${findandReplaceMentions(data.profile.bio)}</pre></div></div>
+                <div id="wiwo"><img src="./images/WIWO.png"/><div style="max-height: 150px; overflow-y: scroll;"><pre>${findandReplaceMentions(data.profile.status)}</pre></div></div>
+                <div id="most-viewed"><img src="./images/MVP.png"/></div>
+                <div id="most-favorited"><img src="./images/MFP.png"/></div>
+                <div id="most-loved"><img src="./images/MLP.png"/></div>
+            `;
 
                 try {
                     while (true) {
-                        let projectUrl = `https://corsproxy.io/?url=https://api.scratch.mit.edu/users/${fetchUser}/projects?offset=${offset}`;
+                        let projectUrl = url + `/projects?offset=${offset}`;
                         projectData = await fetchUrl(projectUrl);
                         if (projectData.length > 0) {
                             projects.push(...projectData);
                             offset += 20;
-                        } else {
-                            break;
-                        }
+                        } else {break;}
                     }
 
                     function sortByViews(projects) {return projects.slice().sort((a, b) => b.stats.views - a.stats.views);}
@@ -124,35 +111,17 @@
             <div id="stats" class="sidecontainer">
                 <center>Project Stats:</center>
                 <ul>
-                    <li>
-                        <img src="./images/Heart.png"/>
-                        ${totalLoves.toLocaleString()}
-                    </li>
-                    <li>
-                        <img src="./images/Star.png"/>
-                        ${totalFavorites.toLocaleString()}
-                    </li>
-                    <li>
-                        <img src="./images/View.png"/>
-                        ${totalViews.toLocaleString()}
-                    </li>
+                    <li><img src="./images/Heart.png"/>${totalLoves.toLocaleString()}</li>
+                    <li><img src="./images/Star.png"/>${totalFavorites.toLocaleString()}</li>
+                    <li><img src="./images/View.png"/>${totalViews.toLocaleString()}</li>
                 </ul>
             </div>
             <div id="stats" class="sidecontainer">
                 <center>Average Project Stats:</center>
                 <ul>
-                    <li>
-                        <img src="./images/Heart.png"/>
-                        ${averageLoves.toLocaleString()}
-                    </li>
-                    <li>
-                        <img src="./images/Star.png"/>
-                        ${averageFavorites.toLocaleString()}
-                    </li>
-                    <li>
-                        <img src="./images/View.png"/>
-                        ${averageViews.toLocaleString()}
-                    </li>
+                    <li><img src="./images/Heart.png"/>${averageLoves.toLocaleString()}</li>
+                    <li><img src="./images/Star.png"/>${averageFavorites.toLocaleString()}</li>
+                    <li><img src="./images/View.png"/>${averageViews.toLocaleString()}</li>
                 </ul>
             </div>
                 `
@@ -176,7 +145,7 @@
                                 projectDiv.classList.add('project');
                                 projectDiv.innerHTML = 
                                 `
-                                <img style="width: 75px;" src="https://uploads.scratch.mit.edu/projects/thumbnails/${project.id}.png" />
+                                <img style="width: 85px;" src="https://uploads.scratch.mit.edu/projects/thumbnails/${project.id}.png" />
                                 <a href="https://scratch.mit.edu/projects/${project.id}">
                                     <p>${project.title}</p>
                                 </a>

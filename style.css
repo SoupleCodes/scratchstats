@@ -3,7 +3,6 @@
     max-width: 780px;
     width: 100%;
     font-family: Tahoma, sans-serif;
-    direction: ltr;
 }
 
 .clearme:after {
@@ -43,9 +42,7 @@
     margin: 6px;
 }
 
-p {
-    margin:0
-}
+p {margin:0}
 
 li {
     display: block;
@@ -67,7 +64,10 @@ img {
     margin-right: 10px;
     margin-top: 5px;
     width: 230px;
-    height: 100vh;
+}
+
+#userinfo {
+    display: table-row;
 }
 
 input {
@@ -87,16 +87,15 @@ input:focus {
 
 #search-field {
     display: flex;
-}
-
-#search-field img {
+img {
     height: 35px;
     display: block;
+}
 }
 
 .project {
     font-size: 11px;
-    width: 75px;
+    width: 85px;
     p {
         white-space: nowrap;
         overflow: hidden;
@@ -105,5 +104,8 @@ input:focus {
 }
 
 pre {
-    font-size: 12px; font-family: Tahoma; margin: 0; white-space: pre-wrap;
+    font-size: 12px; 
+    font-family: Tahoma; 
+    margin: 0; 
+    white-space: pre-wrap;
 }
