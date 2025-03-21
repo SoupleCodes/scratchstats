@@ -1,33 +1,178 @@
 <!doctype html>
-<head></head>
-<body>  
-    User
-    <input id="user"><button onclick="getUser(document.getElementById('user').value)">Go!</button>
-    <div id="user-info"></div>
+
+<head>
+    <title>Scratchstats</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="container">
+        <div id="header" class="clearme">
+            <div id="logo">
+                <img src="./images/Logo.png" />
+            </div>
+            <div class="search-container">
+                <div id="search-field">
+                    <input id="searchbar" placeholder="Search for any user!" autocomplete="off" />
+                    <img id="user" src="./images/search.png"
+                        onclick="getUser(document.getElementById('searchbar').value)" />
+                </div>
+            </div>
+        </div>
+        <div id="userside">
+        </div>
+        <div id="userinfo">
+        </div>
+    </div>
 </body>
 <script>
     const user = new URLSearchParams(window.location.search).get('user')
-    if (user) {
-        getUser(user)
+    if (user) { console.log("Fetching user!");getUser(user)}
+
+    async function fetchUrl(url) {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Fetched Data:", data);
+        return data;
     }
 
     async function getUser(fetchUser) {
         const url = "https://corsproxy.io/https://api.scratch.mit.edu/users/" + fetchUser
-        const response = await fetch(url)
-        
-        var userInfoHTML = document.getElementById("user-info")
-        var href = new URL(window.location.href);
-        href.searchParams.set('user', fetchUser);
-        history.replaceState(null, null, href.toString())
-        
-        var parsedData
-        
         try {
-            if(response.ok) {
-                const data = await response.json();
-                userInfoHTML.innerHTML = JSON.stringify(data);
+            const data = await fetchUrl(url);
+
+            var userside = document.getElementById("userside")
+            var userInfoHTML = document.getElementById("userinfo")
+            var href = new URL(window.location.href);
+            href.searchParams.set('user', fetchUser);
+            history.replaceState(null, null, href.toString())
+
+            let projects, projectData = [];
+            let offset = 0;
+
+            if (data) {
+                userInfoHTML.innerHTML =
+                    `
+                <div id="aboutme">
+                    <img src="./images/AboutMe.png"/>
+                    <pre>${data.profile.bio}</pre>
+                </div>
+            <br/>
+                <div id="wiwo">
+                    <img src="./images/WIWO.png"/>
+                    <pre>${data.profile.status}</pre>
+                </div>
+                <div id="most-viewed">
+                    <img src="./images/MVP.png"/>
+                </div>
+                <div id="most-favorited">
+                    <img src="./images/MFP.png"/>
+                </div>
+                <div id="most-loved">
+                    <img src="./images/MLP.png"/>
+                </div>
+                `
+
+                try {
+                    while (true) {
+                        let projectUrl = `https://corsproxy.io/?url=https://api.scratch.mit.edu/users/${fetchUser}/projects?offset=${offset}`;
+                        projectData = await fetchUrl(projectUrl);
+                        if (projectData.length > 0) {
+                            projects.push(...projectData);
+                            offset += 20;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    function sortByViews(projects) {return projects.slice().sort((a, b) => b.stats.views - a.stats.views);}
+                    function sortByLoves(projects) {return projects.slice().sort((a, b) => b.stats.loves - a.stats.loves);}
+                    function sortByFavorites(projects) {return projects.slice().sort((a, b) => b.stats.favorites - a.stats.favorites);}
+                    function getTop5(sortedProjects) {return sortedProjects.slice(0, 5);}
+
+                    let totalViews = 0;
+                    let totalLoves = 0;
+                    let totalFavorites = 0;
+                    projects.forEach(project => {
+                        totalViews += project.stats.views;
+                        totalLoves += project.stats.loves;
+                        totalFavorites += project.stats.favorites;
+                    });
+
+                    userside.innerHTML =
+                        `
+            <div id="user" class="sidecontainer">
+                <p><img id="user-img" src="${Object.values(data.profile.images)[0]}"/></p>
+                <p id="username">${data.username || 'Unknown'}</p>
+                <p style="color: grey">Location:</p>
+                <p style="font-size: 12px">${data.profile.country || 'Unknown'}</p>
+                <br/>
+                <p style="color: grey">Joined:</p>
+                <p style="font-size: 12px">${new Date(data.history.joined).toLocaleString() || 'Unknown'}</p>
+            </div>
+            <div id="stats" class="sidecontainer">
+                <center>Project Stats:</center>
+                <ul>
+                    <li>
+                        <img src="./images/Heart.png"/>
+                        ${totalLoves}
+                    </li>
+                    <li>
+                        <img src="./images/Star.png"/>
+                        ${totalFavorites}
+                    </li>
+                    <li>
+                        <img src="./images/View.png"/>
+                        ${totalViews}
+                    </li>
+                </ul>
+            </div>
+                `
+                    const topViewed = getTop5(sortByViews(projects));
+                    const topLoved = getTop5(sortByLoves(projects));
+                    const topFavorited = getTop5(sortByFavorites(projects));
+
+                    function displayTopProjects(projects, elementId, statistic) {
+                        const list = document.getElementById(elementId);
+                        const projectsDIV = document.createElement('div');
+
+                        if (list) {
+                            projectsDIV.style.display = 'flex';
+                            projectsDIV.style.flexDirection = 'row';
+                            projectsDIV.style.gap = '5px'
+
+                            projects.forEach(project => {
+                                const projectDiv = document.createElement('div');
+                                projectDiv.style.display = 'flex';
+                                projectDiv.style.flexDirection = 'column';
+                                projectDiv.classList.add('project');
+                                projectDiv.innerHTML = 
+                                `
+                                <img style="width: 75px;" src="https://uploads.scratch.mit.edu/projects/thumbnails/${project.id}.png" />
+                                <a href="https://scratch.mit.edu/projects/${project.id}"><p>${project.title}</p></a>
+                                <small>${project.stats[statistic]}</small>
+                                `;
+                                projectsDIV.appendChild(projectDiv);
+                            });
+                        }
+                        if (list) {list.appendChild(projectsDIV);}
+                    }
+
+                    displayTopProjects(topViewed, "most-viewed", "views");
+                    displayTopProjects(topLoved, "most-loved", "loves");
+                    displayTopProjects(topFavorited, "most-favorited", "favorites");
+
+                } catch (error) {
+                    console.error("Error fetching projects:", error);
+                }
+                document.title = "Scratchstats - " + data.username
+
             } else {
-                throw new Error("Something went wrong");
+                userside.innerHTML = `<p id="username">User not found</p>`
+                userInfoHTML.innerHTML = ""
             }
         } catch (error) {
             userInfoHTML.innerHTML = "ERROR"
