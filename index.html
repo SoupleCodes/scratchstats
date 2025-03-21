@@ -50,7 +50,8 @@
             href.searchParams.set('user', fetchUser);
             history.replaceState(null, null, href.toString())
 
-            let projects, projectData = [];
+            let projects = [];
+            let projectData = [];
             let offset = 0;
 
             if (data) {
