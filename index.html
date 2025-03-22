@@ -23,6 +23,12 @@
     </div>
 </body>
 <script>
+    document.getElementById('searchbar').addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            getUser(document.getElementById('searchbar').value);
+        }
+    })
+    
     const user = new URLSearchParams(window.location.search).get('user')
     if (user) { console.log("Fetching user!");getUser(user)}
 
