@@ -53,6 +53,13 @@
         return await res.json();
     }
 
+    function sanitizeText(text) {
+        const temp = document.createElement('div');
+        temp.innerText = text;
+        return temp.innerHTML;
+    }
+
+
     async function getUser(fetchUser) {
         const url = "https://corsproxy.io/?url=https://api.scratch.mit.edu/users/" + fetchUser
         try {
@@ -69,8 +76,8 @@
 
             if (data) {
                 userInfoHTML.innerHTML = `
-                <div id="aboutme"><img src="./images/AboutMe.png"/><div style="max-height: 150px; overflow-y: auto;"><pre>${findandReplaceMentions(data.profile.bio)}</pre></div></div>
-                <div id="wiwo"><img src="./images/WIWO.png"/><div style="max-height: 150px; overflow-y: auto;"><pre>${findandReplaceMentions(data.profile.status)}</pre></div></div>
+                <div id="aboutme"><img src="./images/AboutMe.png"/><div style="max-height: 150px; overflow-y: auto;"></div></div>
+                <div id="wiwo"><img src="./images/WIWO.png"/><div style="max-height: 150px; overflow-y: auto;"></div></div>
                 <div id="most-viewed"><img src="./images/MVP.png"/></div>
                 <div id="most-favorited"><img src="./images/MFP.png"/></div>
                 <div id="most-loved"><img src="./images/MLP.png"/></div>
@@ -177,6 +184,17 @@
                     displayTopProjects(topViewed, "most-viewed", "views");
                     displayTopProjects(topLoved, "most-loved", "loves");
                     displayTopProjects(topFavorited, "most-favorited", "favorites");
+
+                    const aboutMeDiv = document.querySelector("#aboutme > div")
+                    const wiwoDiv = document.querySelector("#wiwo > div");
+                    const preBio = document.createElement('pre');
+                    const preWiwo = document.createElement('pre');
+
+                    preBio.innerHTML = findandReplaceMentions(sanitizeText(data.profile.bio));
+                    preWiwo.innerHTML = findandReplaceMentions(sanitizeText(data.profile.status));
+                    
+                    aboutMeDiv.appendChild(preBio);
+                    wiwoDiv.appendChild(preWiwo);
 
                 } catch (error) {
                     console.error("Error fetching projects:", error);
