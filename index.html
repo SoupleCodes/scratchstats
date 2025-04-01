@@ -1,18 +1,20 @@
 <!doctype html>
+
 <head>
     <title>Scratchstats</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div id="container">
         <div id="header" class="clearme">
             <div id="logo">
-                <img src="./images/Logo.png"/>
+                <img src="./images/Logo.png" />
             </div>
             <div class="search-container">
                 <div id="search-field">
-                    <input id="searchbar" placeholder="Search for any user!" autocomplete="off"/>
-                    <img id="user" src="./images/search.png" onclick="getUser(document.getElementById('searchbar').value)"/>
+                    <input id="searchbar" placeholder="Search for any user!" autocomplete="off" />
+                    <img id="user" src="./images/search.png">
                 </div>
             </div>
         </div>
@@ -22,192 +24,21 @@
         </div>
     </div>
 </body>
-<script>
-    document.getElementById('searchbar').addEventListener('keydown', function(event) {
+
+<script type="module">
+    import { getUser } from './scripts.js'
+    document.getElementById('searchbar').addEventListener('keydown', function (event) {
         if (event.key === 'Enter') {
             getUser(document.getElementById('searchbar').value);
         }
     })
-    
+
+    document.getElementById('user').addEventListener('click', function () {
+        getUser(document.getElementById('searchbar').value);
+    });
+
     const user = new URLSearchParams(window.location.search).get('user')
-    if (user) { console.log("Fetching user!");getUser(user)}
-
-    function hyperLinkText(text, href) {
-        const link = document.createElement('a');
-        link.href = href;
-        link.textContent = text;
-        return link;
-    }
-
-    function findandReplaceMentions(text) {
-        const mentionRegex = /@([a-zA-Z0-9_-]+)/g;
-        return text.replace(mentionRegex, (match, username) => {
-            const link = hyperLinkText(`@${username}`, `https://scratch.mit.edu/users/${username}`);
-            return link.outerHTML;
-        })
-    }
-
-    async function fetchUrl(url) {
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        return await res.json();
-    }
-
-    function sanitizeText(text) {
-        const temp = document.createElement('div');
-        temp.innerText = text;
-        return temp.innerHTML;
-    }
-
-
-    async function getUser(fetchUser) {
-        const url = "https://corsproxy.io/?url=https://api.scratch.mit.edu/users/" + fetchUser
-        try {
-            const data = await fetchUrl(url);
-            var userside = document.getElementById("userside")
-            var userInfoHTML = document.getElementById("userinfo")
-            var href = new URL(window.location.href);
-            href.searchParams.set('user', fetchUser);
-            history.replaceState(null, null, href.toString())
-
-            let projects = [];
-            let projectData = [];
-            let offset = 0;
-
-            if (data) {
-                userInfoHTML.innerHTML = `
-                <div id="aboutme"><img src="./images/AboutMe.png"/><div style="max-height: 150px; overflow-y: auto;"></div></div>
-                <div id="wiwo"><img src="./images/WIWO.png"/><div style="max-height: 150px; overflow-y: auto;"></div></div>
-                <div id="most-viewed"><img src="./images/MVP.png"/></div>
-                <div id="most-favorited"><img src="./images/MFP.png"/></div>
-                <div id="most-loved"><img src="./images/MLP.png"/></div>
-            `;
-
-                try {
-                    while (true) {
-                        let projectUrl = url + `/projects?offset=${offset}`;
-                        projectData = await fetchUrl(projectUrl);
-                        if (projectData.length > 0) {
-                            projects.push(...projectData);
-                            offset += 20;
-                        } else {break;}
-                    }
-
-                    function sortByViews(projects) {return projects.slice().sort((a, b) => b.stats.views - a.stats.views);}
-                    function sortByLoves(projects) {return projects.slice().sort((a, b) => b.stats.loves - a.stats.loves);}
-                    function sortByFavorites(projects) {return projects.slice().sort((a, b) => b.stats.favorites - a.stats.favorites);}
-                    function getTop5(sortedProjects) {return sortedProjects.slice(0, 5);}
-
-                    let totalViews = 0;
-                    let totalLoves = 0;
-                    let totalFavorites = 0;
-                    projects.forEach(project => {
-                        totalViews += project.stats.views;
-                        totalLoves += project.stats.loves;
-                        totalFavorites += project.stats.favorites;
-                    });
-
-                    const averageViews = projects.length > 0 ? Math.round(totalViews / projects.length) : 0;
-                    const averageLoves = projects.length > 0 ? Math.round(totalLoves / projects.length) : 0;
-                    const averageFavorites = projects.length > 0 ? Math.round(totalFavorites / projects.length) : 0;
-                    userside.innerHTML =
-                        `
-            <div id="user" class="sidecontainer">
-                <p><img id="user-img" src="${Object.values(data.profile.images)[0]}"/></p>
-                <p id="username">${data.username || 'Unknown'}</p>
-                <p style="color: grey">Location:</p>
-                <p style="font-size: 12px">${data.profile.country || 'Unknown'}</p>
-                <br/>
-                <p style="color: grey">Joined:</p>
-                <p style="font-size: 12px">${new Date(data.history.joined).toLocaleString() || 'Unknown'}</p>
-            </div>
-            <div id="stats" class="sidecontainer">
-                <center>Project Stats:</center>
-                <ul>
-                    <li><img src="./images/Heart.png"/> ${totalLoves.toLocaleString()}</li>
-                    <li><img src="./images/Star.png"/> ${totalFavorites.toLocaleString()}</li>
-                    <li><img src="./images/View.png"/> ${totalViews.toLocaleString()}</li>
-                </ul>
-            </div>
-            <div id="stats" class="sidecontainer">
-                <center>Average Project Stats:</center>
-                <ul>
-                    <li><img src="./images/Heart.png"/> ${averageLoves.toLocaleString()}</li>
-                    <li><img src="./images/Star.png"/> ${averageFavorites.toLocaleString()}</li>
-                    <li><img src="./images/View.png"/> ${averageViews.toLocaleString()}</li>
-                </ul>
-            </div>
-                `
-                    const topViewed = getTop5(sortByViews(projects));
-                    const topLoved = getTop5(sortByLoves(projects));
-                    const topFavorited = getTop5(sortByFavorites(projects));
-
-                    function displayTopProjects(projects, elementId, statistic) {
-                        const list = document.getElementById(elementId);
-                        const projectsDIV = document.createElement('div');
-
-                        if (list) {
-                            projectsDIV.style.display = 'flex';
-                            projectsDIV.style.flexDirection = 'row';
-                            projectsDIV.style.gap = '5px'
-
-                            projects.forEach(project => {
-                                const projectDiv = document.createElement('div');
-                                projectDiv.style.display = 'flex';
-                                projectDiv.style.flexDirection = 'column';
-                                projectDiv.classList.add('project');
-                                projectDiv.innerHTML = 
-                                `
-                                <img style="width: 85px;" src="https://uploads.scratch.mit.edu/projects/thumbnails/${project.id}.png" />
-                                <a href="https://scratch.mit.edu/projects/${project.id}">
-                                    <p title="${project.title}">${project.title}</p>
-                                </a>
-                                <div>
-                                    <img src="./images/${
-                                        statistic === "views" ? "View" :
-                                        statistic === "loves" ? "Heart" :
-                                        statistic === "favorites" ? "Star" :
-                                        ''
-                                    }.png" style="
-                                        width: 7px;
-                                        vertical-align: middle;
-                                    ">
-                                    <small>${project.stats[statistic]}</small>
-                                </div>
-                                `;
-                                projectsDIV.appendChild(projectDiv);
-                            });
-                        }
-                        if (list) {list.appendChild(projectsDIV);}
-                    }
-
-                    displayTopProjects(topViewed, "most-viewed", "views");
-                    displayTopProjects(topLoved, "most-loved", "loves");
-                    displayTopProjects(topFavorited, "most-favorited", "favorites");
-
-                    const aboutMeDiv = document.querySelector("#aboutme > div")
-                    const wiwoDiv = document.querySelector("#wiwo > div");
-                    const preBio = document.createElement('pre');
-                    const preWiwo = document.createElement('pre');
-
-                    preBio.innerHTML = findandReplaceMentions(sanitizeText(data.profile.bio));
-                    preWiwo.innerHTML = findandReplaceMentions(sanitizeText(data.profile.status));
-                    
-                    aboutMeDiv.appendChild(preBio);
-                    wiwoDiv.appendChild(preWiwo);
-
-                } catch (error) {
-                    console.error("Error fetching projects:", error);
-                }
-                document.title = "Scratchstats - " + data.username
-
-            } else {
-                userside.innerHTML = `<p id="username">User not found</p>`
-                userInfoHTML.innerHTML = ""
-            }
-        } catch (error) {
-            userInfoHTML.innerHTML = "ERROR"
-        }
-    }
+    if (user) { console.log("Fetching user!"); getUser(user) }
 </script>
+
 </html>

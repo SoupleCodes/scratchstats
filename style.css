@@ -25,6 +25,12 @@
     float: left;
 }
 
+#aboutme div, #wiwo div {
+    max-height: 150px;
+    max-width: 458px; 
+    overflow: auto;
+}
+
 #user-img {
     float: right;
     width: 56px;
